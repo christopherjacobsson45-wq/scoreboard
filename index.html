@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poängbordet</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E5B40">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: varm spelkväll, tydlig som ett protokollblock
+   IDEA: kortbordet – filtgrönt bord där ställningen ligger som spelkort
+   PICTURE: stor ställning med kortlika placeringsmärken överst i varje spel
+   COLOUR and TYPE: filtgrönt, vitt kort, kortrött accent; Rubik rakt igenom
+   LAYOUT: en kolumn för mobilen, flikar längst ner, ark som glider upp */
+:root{color-scheme:light dark;--bg:light-dark(#F3F5F3,#0F1311);--card:light-dark(#FFFFFF,#1A201D);--ink:light-dark(#121916,#ECF0ED);--mute:light-dark(#525E58,#A6B2AB);--line:light-dark(#D9DFDB,#2C3631);--felt:light-dark(#0E5B40,#0B4532);--feltink:#F2F7F4;--red:light-dark(#C8102E,#FF6B7D);--soft:light-dark(#E7EEE9,#22302A)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+:root[data-skin=vin]{--felt:light-dark(#7A1F35,#5C1628);--red:light-dark(#8A5A00,#F2C14E);--soft:light-dark(#F1E6E8,#2E1F23)}
+:root[data-skin=hav]{--felt:light-dark(#1D4E89,#163B68);--red:light-dark(#B4232F,#FF7A7A);--soft:light-dark(#E4ECF5,#1C2A3B)}
+:root[data-skin=natt]{color-scheme:dark;--bg:#0D1015;--card:#161B23;--ink:#E8EDF3;--mute:#A0AAB8;--line:#2A313D;--soft:#20262F;--felt:#262F40;--red:#FF8A5B}
+.hbtn{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:transparent;color:var(--feltink);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sw{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sw button{min-height:88px;border-radius:14px;border:2px solid var(--line);cursor:pointer;color:#fff;font-weight:700;display:flex;align-items:flex-end;padding:10px;text-align:left}
+.sw button[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg) inset}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Rubik,system-ui,sans-serif;overflow-x:clip;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button,input,select,textarea{font:inherit;color:inherit}
+header{background:var(--felt);color:var(--feltink);padding:calc(18px + env(safe-area-inset-top)) 18px 22px}
+header h1{margin:0;font-size:32px;line-height:1.05;font-weight:800;letter-spacing:-.01em}
+header p{margin:4px 0 0;color:#CFE3D8;font-size:14px}
+main{max-width:720px;margin:0 auto;padding:16px}
+h2{font-size:22px;line-height:1.15;margin:8px 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.list{display:grid;gap:10px}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1}
+.mute{color:var(--mute);font-size:14px}
+.tag{display:inline-block;font-size:13px;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--mute)}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:500;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.pri{background:var(--felt);color:var(--feltink);border-color:transparent}
+.btn.red{color:var(--red)}
+.btn.wide{width:100%}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tap:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.tap{all:unset;display:block;cursor:pointer;width:100%;box-sizing:border-box}
+.board{display:grid;gap:8px;margin:12px 0}
+.place{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.pc{flex:none;width:38px;height:52px;border-radius:6px;background:#fff;border:1px solid #C9CFCB;box-shadow:0 2px 0 rgba(0,0,0,.12);display:flex;flex-direction:column;justify-content:space-between;padding:3px 5px;font-weight:800;font-size:15px;color:#121916}
+.pc.r{color:#C8102E}.pc span:last-child{align-self:flex-end;transform:rotate(180deg)}
+.place .nm{font-size:18px;font-weight:500}
+.place .sc{font-size:clamp(26px,8vw,36px);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:5px;border-radius:3px;background:var(--soft);margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--felt)}
+.lead .sc{color:var(--red)}
+.banner{background:var(--felt);color:var(--feltink);border-radius:14px;padding:12px 14px;margin:12px 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tbody tr{cursor:pointer}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0;font-size:13px;color:var(--mute)}
+nav button[aria-current=page]{color:var(--felt);font-weight:700}
+nav button:focus-visible{outline:3px solid var(--red)}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+#sheet[hidden]{display:none}
+.panel{background:var(--bg);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom));animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@media (prefers-reduced-motion:reduce){.panel{animation:none}}
+label.f{display:grid;gap:6px;font-size:14px;font-weight:500;margin:10px 0}
+input[type=text],input[type=number],select,textarea{width:100%;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px 12px;font-size:16px}
+textarea{min-height:120px;resize:vertical}
+fieldset{border:1px solid var(--line);border-radius:14px;margin:10px 0;padding:10px 12px;background:var(--card)}
+legend{font-weight:700;padding:0 6px}
+.fl{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:10px;align-items:center;margin:6px 0}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px}
+.chk input{width:24px;height:24px;accent-color:var(--felt)}
+.pre{font-weight:700;text-align:right;color:var(--felt)}
+code{background:var(--soft);padding:2px 6px;border-radius:6px;font-size:13px;overflow-wrap:anywhere}
+.ai{background:var(--felt);color:var(--feltink);border:0}
+.ai .mute{color:#CFE3D8}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:90vw}
+.answer{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}
+.empty{text-align:center;padding:28px 12px}
+</style>
+</head>
+<body>
+<header><div class="row"><div class="grow"><h1 id="ttl">Poängbordet</h1><p id="sub">Räkna poäng till kvällens spel</p></div><button class="hbtn" data-act="theme" aria-label="Byt tema"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg></button></div></header>
+<main id="main"><p class="mute">Laddar…</p></main>
+<nav aria-label="Flikar">
+<button data-act="tab" data-v="spela"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="11" height="15" rx="2"/><path d="M10 3h9a2 2 0 0 1 2 2v13"/></svg>Spela</button>
+<button data-act="tab" data-v="bibliotek"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v16H4zM14 4h6v16h-6z"/></svg>Spel</button>
+<button data-act="tab" data-v="kamp"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4h10v5a5 5 0 0 1-10 0zM5 5H3v2a4 4 0 0 0 4 4M19 5h2v2a4 4 0 0 1-4 4M12 14v4M8 21h8"/></svg>Kamp</button>
+<button data-act="tab" data-v="historik"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Historik</button>
+</nav>
+<div id="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+<script>
+{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const r2=x=>Math.round(x*100)/100;
+const dstr=t=>new Date(t).toLocaleDateString('sv-SE',{day:'numeric',month:'short'});
+const FN={min:Math.min,max:Math.max,abs:Math.abs,round:Math.round,floor:Math.floor,ceil:Math.ceil};
+
+/* ---------- Räknemotorn: en liten säker formeltolk ---------- */
+function compile(src){
+  const toks=[],re=/\s*(?:(\d+(?:\.\d+)?)|([a-z_][a-z0-9_]*)|(==|!=|>=|<=|&&|\|\||[-+*\/()?:<>!,]))/y;
+  src=String(src||'').toLowerCase();
+  while(re.lastIndex<src.length){const at=re.lastIndex,m=re.exec(src);
+    if(!m){if(/^\s*$/.test(src.slice(at)))break;throw Error('Okänt tecken i formeln vid "'+src.slice(at,at+6)+'"')}
+    if(m[1])toks.push({n:+m[1]});else if(m[2])toks.push({id:m[2]});else toks.push({op:m[3]})}
+  let p=0;const ids=new Set();const is=o=>toks[p]&&toks[p].op===o;const eat=o=>{if(!is(o))throw Error('Formeln saknar "'+o+'"');p++};
+  const bin=(next,ops)=>()=>{let l=next();while(toks[p]&&ops[toks[p].op]){const f=ops[toks[p++].op],a=l,b=next();l=e=>f(a(e),b(e))}return l};
+  const B=x=>x?1:0;
+  const prim=()=>{const t=toks[p++];if(!t)throw Error('Formeln tar slut för tidigt');
+    if('n' in t)return()=>t.n;
+    if(t.id){if(is('(')){const fn=FN[t.id];if(!fn)throw Error('Okänd funktion: '+t.id);p++;const args=[];if(!is(')')){args.push(tern());while(is(',')){p++;args.push(tern())}}eat(')');return e=>fn(...args.map(a=>a(e)))}
+      ids.add(t.id);return e=>+e[t.id]||0}
+    if(t.op==='('){const x=tern();eat(')');return x}
+    if(t.op==='-'){const x=prim();return e=>-x(e)}
+    if(t.op==='!'){const x=prim();return e=>B(!x(e))}
+    throw Error('Oväntat "'+t.op+'" i formeln')};
+  const mul=bin(prim,{'*':(a,b)=>a*b,'/':(a,b)=>b?a/b:0});
+  const add=bin(mul,{'+':(a,b)=>a+b,'-':(a,b)=>a-b});
+  const cmp=bin(add,{'<':(a,b)=>B(a<b),'>':(a,b)=>B(a>b),'<=':(a,b)=>B(a<=b),'>=':(a,b)=>B(a>=b)});
+  const eq=bin(cmp,{'==':(a,b)=>B(a==b),'!=':(a,b)=>B(a!=b)});
+  const and=bin(eq,{'&&':(a,b)=>B(a&&b)});
+  const or=bin(and,{'||':(a,b)=>B(a||b)});
+  function tern(){const c=or();if(is('?')){p++;const a=tern();eat(':');const b=tern();return e=>c(e)?a(e):b(e)}return c}
+  const f=tern();if(p<toks.length)throw Error('Formeln har något extra i slutet');
+  return {f,ids};
+}
+const cache={};
+const getF=src=>(cache[src]||(cache[src]=compile(src))).f;
+function score(g,vals){const env={};(g.params||[]).forEach(x=>env[x.key]=+x.value||0);g.falt.forEach(x=>env[x.key]=+((vals||{})[x.key])||0);try{return r2(getF(g.formel)(env))}catch(e){return 0}}
+function validate(raw){
+  if(!raw||typeof raw!=='object')throw Error('Kunde inte tolka reglerna, försök igen');
+  const key=/^[a-z_][a-z0-9_]*$/;
+  const g={name:String(raw.name||'Nytt spel').slice(0,60),kategori:String(raw.kategori||'Övrigt'),summary:String(raw.summary||''),
+    spelare:{min:+(raw.spelare&&raw.spelare.min)||2,max:+(raw.spelare&&raw.spelare.max)||8},
+    vinnare:raw.vinnare==='lagst'?'lagst':'hogst',slut:{typ:'fritt'},params:[],falt:[],formel:String(raw.formel||''),omgangar:Array.isArray(raw.omgangar)?raw.omgangar.map(String).filter(Boolean).slice(0,40):[]};
+  const s=raw.slut||{};if((s.typ==='mal'||s.typ==='rundor')&&+s.varde>0)g.slut={typ:s.typ,varde:+s.varde};
+  (raw.params||[]).forEach(x=>{if(x&&key.test(x.key))g.params.push({key:x.key,label:String(x.label||x.key),value:+x.value||0})});
+  (raw.falt||[]).forEach(x=>{if(x&&key.test(x.key))g.falt.push({key:x.key,label:String(x.label||x.key),typ:x.typ==='bock'?'bock':'tal',hjalp:x.hjalp?String(x.hjalp):''})});
+  if(!g.falt.length)throw Error('Regelfilen saknar fält att fylla i');
+  const known=new Set([...g.params,...g.falt].map(x=>x.key));
+  const {ids}=compile(g.formel);ids.forEach(i=>{if(!known.has(i))throw Error('Formeln använder okänt namn: '+i)});
+  return g;
+}
+
+/* ---------- Förinlagda spel ---------- */
+const BUILTIN=[
+{id:'b-plump',name:'Plump',kategori:'Kortspel',summary:'Alla bjuder på hur många stick de tar. Exakt bud ger bonus plus budet, lyckat nollbud ger egen poäng, fel bud ger noll.',spelare:{min:3,max:6},vinnare:'hogst',slut:{typ:'fritt'},params:[{key:'bonus',label:'Bonus för rätt bud',value:10},{key:'nollbud',label:'Poäng för lyckat nollbud',value:5}],falt:[{key:'bud',label:'Bud',typ:'tal'},{key:'stick',label:'Tagna stick',typ:'tal'}],formel:'stick == bud ? (bud == 0 ? nollbud : bonus + bud) : 0'},
+{id:'b-chicago',name:'Chicago',kategori:'Kortspel',summary:'Pokerpoäng i poängomgångarna, bonus för sista sticket och plus eller minus för Chicago. Först till 52 vinner.',spelare:{min:2,max:6},vinnare:'hogst',slut:{typ:'mal',varde:52},params:[{key:'sista',label:'Poäng för sista sticket',value:5},{key:'chicagop',label:'Poäng för Chicago',value:15}],falt:[{key:'hand',label:'Pokerpoäng',typ:'tal',hjalp:'Poäng för händer den här omgången'},{key:'stick',label:'Tog sista sticket',typ:'bock'},{key:'chicago',label:'Chicago: 1 lyckad, -1 misslyckad',typ:'tal'}],formel:'hand + (stick ? sista : 0) + chicago * chicagop'},
+{id:'b-canasta',name:'Canasta',kategori:'Kortspel',summary:'Kortpoäng plus bonus för rena och blandade canastor, för att gå ut och för röda treor. Först till 5000 vinner. Spelas ofta i lag: skriv lagen som spelare.',spelare:{min:2,max:4},vinnare:'hogst',slut:{typ:'mal',varde:5000},params:[{key:'ren',label:'Ren canasta',value:500},{key:'bland',label:'Blandad canasta',value:300},{key:'ut',label:'Gå ut',value:100},{key:'trea',label:'Röd trea (st)',value:100}],falt:[{key:'kort',label:'Kortpoäng (lagda minus kvar på hand)',typ:'tal'},{key:'rena',label:'Rena canastor',typ:'tal'},{key:'blandade',label:'Blandade canastor',typ:'tal'},{key:'treor',label:'Röda treor',typ:'tal'},{key:'gickut',label:'Gick ut',typ:'bock'}],formel:'kort + rena * ren + blandade * bland + treor * trea + (gickut ? ut : 0)'},
+{id:'b-gin6',name:'6 omgångars Gin & Rummy',kategori:'Kortspel',summary:'Elva kort och sex omgångar. Varje omgång har en öppningshand. Kort på bordet ger plus, kort på handen minus, och vinnaren av omgången får bonus.',spelare:{min:2,max:8},vinnare:'hogst',slut:{typ:'rundor',varde:6},omgangar:["Två triss", "Ett triss & en stege", "Två stegar", "Tre triss", "Två triss & en stege", "Två stegar & ett triss (sista kortet måste också passa)"],params:[{key:'v29',label:'Kort 2–9',value:5},{key:'v10',label:'Kort 10–kung',value:10},{key:'vess',label:'Ess',value:15},{key:'vjoker',label:'Joker',value:25},{key:'bonus',label:'Bonus för vunnen omgång',value:50},{key:'plusbord',label:'Plus för kort på bordet (1 = ja, 0 = nej)',value:1}],falt:[{key:'b29',label:'På bordet: 2–9 (antal)',typ:'tal',hjalp:'Räkna dina kombinationer, även kort andra byggt på'},{key:'b10',label:'På bordet: 10–kung (antal)',typ:'tal'},{key:'bess',label:'På bordet: ess (antal)',typ:'tal'},{key:'bj',label:'På bordet: jokrar (antal)',typ:'tal'},{key:'h29',label:'På handen: 2–9 (antal)',typ:'tal'},{key:'h10',label:'På handen: 10–kung (antal)',typ:'tal'},{key:'hess',label:'På handen: ess (antal)',typ:'tal'},{key:'hj',label:'På handen: jokrar (antal)',typ:'tal'},{key:'vann',label:'Vann omgången',typ:'bock'}],formel:'plusbord * (b29 * v29 + b10 * v10 + bess * vess + bj * vjoker) - (h29 * v29 + h10 * v10 + hess * vess + hj * vjoker) + (vann ? bonus : 0)'},
+{id:'b-gin15',name:'15 omgångars Gin & Rummy',kategori:'Kortspel',summary:'Den långa varianten med 15 öppningshänder. Samma poäng: plus för bordet, minus för handen och bonus för vunnen omgång. Sätt bonusen till 0 om ni kör utan.',spelare:{min:2,max:8},vinnare:'hogst',slut:{typ:'rundor',varde:15},omgangar:["Två triss", "Ett triss & en stege", "Tre triss", "Två stegar", "En stege på fem kort & två triss", "Fyra triss", "Två stegar på fyra kort & ett triss", "Ett fyrtal & en stege på fem kort", "Två stegar på fem kort", "Ett femtal & två stegar på fyra kort", "Tre stegar på fyra kort", "Två fyrtal & ett triss", "Ett femtal & ett triss & ett par (paret får ej byggas på)", "En stege på fem kort & två fyrtal", "Två triss & resterande kort i en stege"],params:[{key:'v29',label:'Kort 2–9',value:5},{key:'v10',label:'Kort 10–kung',value:10},{key:'vess',label:'Ess',value:15},{key:'vjoker',label:'Joker',value:25},{key:'bonus',label:'Bonus för vunnen omgång',value:50},{key:'plusbord',label:'Plus för kort på bordet (1 = ja, 0 = nej)',value:1}],falt:[{key:'b29',label:'På bordet: 2–9 (antal)',typ:'tal',hjalp:'Räkna dina kombinationer, även kort andra byggt på'},{key:'b10',label:'På bordet: 10–kung (antal)',typ:'tal'},{key:'bess',label:'På bordet: ess (antal)',typ:'tal'},{key:'bj',label:'På bordet: jokrar (antal)',typ:'tal'},{key:'h29',label:'På handen: 2–9 (antal)',typ:'tal'},{key:'h10',label:'På handen: 10–kung (antal)',typ:'tal'},{key:'hess',label:'På handen: ess (antal)',typ:'tal'},{key:'hj',label:'På handen: jokrar (antal)',typ:'tal'},{key:'vann',label:'Vann omgången',typ:'bock'}],formel:'plusbord * (b29 * v29 + b10 * v10 + bess * vess + bj * vjoker) - (h29 * v29 + h10 * v10 + hess * vess + hj * vjoker) + (vann ? bonus : 0)'},
+{id:'b-norsk',name:'Norsk',kategori:'Kortspel',summary:'Mall utan inlagda regler: poängen skrivs in för hand. Öppna spelet, tryck på "Ändra med egna ord" och beskriv hur ni räknar.',spelare:{min:2,max:8},vinnare:'hogst',slut:{typ:'fritt'},params:[],falt:[{key:'poang',label:'Poäng',typ:'tal'}],formel:'poang'},
+{id:'b-brad',name:'Brädspel – slutpoäng',kategori:'Brädspel',summary:'För vilket brädspel som helst: skriv in varje spelares slutpoäng.',spelare:{min:1,max:8},vinnare:'hogst',slut:{typ:'rundor',varde:1},params:[],falt:[{key:'poang',label:'Slutpoäng',typ:'tal'}],formel:'poang'},
+{id:'b-fri',name:'Fri poängräkning',kategori:'Övrigt',summary:'Skriv in poäng runda för runda. Högst vinner.',spelare:{min:1,max:10},vinnare:'hogst',slut:{typ:'fritt'},params:[],falt:[{key:'poang',label:'Poäng',typ:'tal'}],formel:'poang'}];
+
+/* ---------- Lagring: delad databas, annars den här webbläsaren ---------- */
+const S={games:{},sessions:{},kamper:{}};
+let db=null,sample=null,canImg=false;
+const LS='poangbordet-v1',chains={};
+function loadLocal(){try{const d=JSON.parse(localStorage.getItem(LS)||'{}');for(const c in S)S[c]=d[c]||{}}catch(e){}}
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function queue(k,fn){chains[k]=(chains[k]||Promise.resolve()).then(fn).catch(e=>toast(e&&e.code==='quota_exceeded'?'Lagringen är full – ta bort gamla spel':'Kunde inte spara ändringen'))}
+function put(c,id,o){S[c][id]=o;render();if(db)queue(c+'/'+id,()=>db.doc(c+'/'+id).set(o));else saveLocal()}
+function del(c,id){delete S[c][id];render();if(db)queue(c+'/'+id,()=>db.doc(c+'/'+id).delete());else saveLocal()}
+let tt;function toast(m){let t=$('.toast');if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;clearTimeout(tt);tt=setTimeout(()=>t.remove(),3200)}
+
+/* ---------- Beräkningar ---------- */
+const allGames=()=>[...Object.values(S.games).sort((a,b)=>(b.skapad||0)-(a.skapad||0)),...BUILTIN];
+const findGame=id=>S.games[id]||BUILTIN.find(g=>g.id===id);
+const totals=s=>s.players.map((_,i)=>r2(s.rounds.reduce((t,r)=>t+score(s.game,r.v[i]),0)));
+function ranks(vals,low){const o=vals.map((v,i)=>({v,i})).sort((a,b)=>low?a.v-b.v:b.v-a.v);const rk=[];o.forEach((x,j)=>{rk[x.i]=j&&x.v===o[j-1].v?rk[o[j-1].i]:j+1});return{order:o.map(x=>x.i),rk}}
+const goals=g=>g.omgangar||[];
+function ended(s){const g=s.game,t=totals(s);if(goals(g).length&&s.rounds.length>=goals(g).length)return true;if(g.slut.typ==='mal')return t.some(x=>x>=g.slut.varde);if(g.slut.typ==='rundor')return s.rounds.length>=g.slut.varde;return false}
+const slutTxt=g=>g.slut.typ==='mal'?'Först till '+g.slut.varde:g.slut.typ==='rundor'?g.slut.varde+(g.slut.varde==1?' runda':' rundor'):'Spela så länge ni vill';
+const SUITS=['♥','♠','♦','♣'];
+function pcard(n){const s=SUITS[(n-1)%4];return '<span class="pc'+((n-1)%2?'':' r')+'" aria-hidden="true"><span>'+n+s+'</span><span>'+n+s+'</span></span>'}
+function board(names,vals,low,unit){const {order,rk}=ranks(vals,low);const mx=Math.max(1,...vals.map(Math.abs));
+  return '<div class="board">'+order.map(i=>'<div class="place'+(rk[i]===1?' lead':'')+'">'+pcard(rk[i])+'<div class="grow"><div class="nm">'+esc(names[i])+'</div><div class="bar"><i style="width:'+Math.max(2,Math.abs(vals[i])/mx*100)+'%"></i></div></div><div class="sc">'+vals[i]+(unit||'')+'</div></div>').join('')+'</div>'}
+function kampPts(k){const n=k.spelare.length,sk=String(k.skala||'').split(/[ ,;]+/).filter(x=>x!=='').map(Number).filter(x=>!isNaN(x));
+  return k.spelare.map(p=>k.moments.reduce((t,m)=>{const pl=+m.plac[p];if(!pl)return t;return t+(sk.length?(sk[pl-1]||0):Math.max(0,n-pl+1))},0))}
+
+/* ---------- Vyer ---------- */
+let view={tab:'spela'},filt='';
+function render(){
+  document.querySelectorAll('nav button').forEach(b=>b.dataset.v===view.tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
+  const m=$('#main');let h='';
+  if(view.session&&S.sessions[view.session])h=vSession(S.sessions[view.session]);
+  else if(view.kamp&&S.kamper[view.kamp])h=vKamp(S.kamper[view.kamp]);
+  else{view.session=view.kamp=null;h=({spela:vSpela,bibliotek:vLib,kamp:vKamper,historik:vHist})[view.tab]()}
+  m.innerHTML=h;
+}
+function setHead(t,s){$('#ttl').textContent=t;$('#sub').textContent=s}
+function vSpela(){setHead('Poängbordet','Räkna poäng till kvällens spel');
+  const act=Object.values(S.sessions).filter(s=>s.status!=='klar').sort((a,b)=>b.skapad-a.skapad);
+  let h='<h2>Pågående spel</h2>';
+  if(!act.length)h+='<div class="card empty"><p>Inget spel pågår just nu.</p><button class="btn pri" data-act="tab" data-v="bibliotek">Välj ett spel</button></div>';
+  else h+='<div class="list">'+act.map(s=>{const t=totals(s),{order}=ranks(t,s.game.vinnare==='lagst');return '<button class="tap card" data-act="open-session" data-id="'+s.id+'"><div class="row"><div class="grow"><strong>'+esc(s.name)+'</strong><div class="mute">'+s.rounds.length+' rundor · '+esc(s.players.join(', '))+'</div></div><div style="text-align:right"><div class="mute">Leder</div><strong>'+esc(s.players[order[0]])+' '+t[order[0]]+'</strong></div></div></button>'}).join('')+'</div><div class="btns"><button class="btn" data-act="tab" data-v="bibliotek">Starta ett till spel</button></div>';
+  return h}
+function vSession(s){const g=s.game,t=totals(s),low=g.vinnare==='lagst',klar=s.status==='klar';
+  setHead(s.name,(klar?'Avslutat '+dstr(s.klar):'Runda '+(s.rounds.length+1))+' · '+slutTxt(g)+' · '+(low?'lägst':'högst')+' vinner');
+  let h='<button class="btn" data-act="back">‹ Tillbaka</button>'+board(s.players,t,low);
+  const go=goals(g);if(go.length&&!klar){const n=s.rounds.length;h+=n<go.length?'<div class="banner"><div style="font-size:14px;color:#CFE3D8">Omgång '+(n+1)+' av '+go.length+'</div><strong style="font-size:22px">'+esc(go[n])+'</strong></div>':''}
+  if(!klar&&ended(s)){const {order}=ranks(t,low);h+='<div class="banner"><strong>'+esc(s.players[order[0]])+' har vunnit!</strong> Målet är nått. Avsluta för att spara i historiken.</div>'}
+  if(klar)h+='<div class="banner">Vinnare: <strong>'+esc((s.vinnare||[]).join(' & '))+'</strong></div>';
+  h+='<div class="btns">'+(klar?'<button class="btn pri" data-act="to-kamp">Lägg till i en kamp</button><button class="btn" data-act="resume">Öppna igen</button>':'<button class="btn pri" data-act="new-round">+ Ny runda</button><button class="btn" data-act="finish">Avsluta spelet</button>')+(sample?'<button class="btn" data-act="rule-q">Fråga om reglerna</button>':'')+'</div>';
+  if(go.length)h+='<details class="card" style="margin-bottom:10px"><summary><strong>Alla omgångar</strong></summary><ol>'+go.map((x,j)=>'<li'+(j<s.rounds.length?' class="mute"':'')+'>'+esc(x)+(j<s.rounds.length?' ✓':'')+'</li>').join('')+'</ol></details>';
+  if(s.rounds.length){h+='<div class="card scroll"><table><thead><tr><th>Runda</th>'+s.players.map(p=>'<th>'+esc(p)+'</th>').join('')+'</tr></thead><tbody>'+s.rounds.map((r,j)=>'<tr data-act="edit-round" data-i="'+j+'" tabindex="0"><td>'+(j+1)+(go[j]?' <span class="mute">'+esc(go[j])+'</span>':'')+'</td>'+s.players.map((_,i)=>'<td>'+score(g,r.v[i])+'</td>').join('')+'</tr>').join('')+'</tbody></table></div><p class="mute">Tryck på en runda för att ändra den.</p>'}
+  else h+='<p class="mute">Inga rundor än. Tryck på "Ny runda" när första rundan är spelad.</p>';
+  h+='<div class="btns"><button class="btn red" data-act="del-session">Ta bort spelet</button></div>';return h}
+function vLib(){setHead('Spel','Förinlagda spel och era egna');
+  let h='';
+  h+=sample?'<button class="tap card ai" data-act="ai-create"><strong style="font-size:20px">Skapa ett spel från regler</strong><div class="mute">Klistra in reglerna'+(canImg?' eller fota regelhäftet':'')+', så byggs poängräkningen åt er.</div></button>':'';
+  const mine=Object.values(S.games).sort((a,b)=>(b.skapad||0)-(a.skapad||0));
+  const row=g=>'<button class="tap card" data-act="open-game" data-id="'+g.id+'"><div class="row"><strong class="grow">'+esc(g.name)+'</strong><span class="tag">'+esc(g.kategori)+'</span></div><div class="mute">'+esc(g.summary)+'</div></button>';
+  if(mine.length)h+='<h2>Era spel</h2><div class="list">'+mine.map(row).join('')+'</div>';
+  h+='<h2>Förinlagda</h2><div class="list">'+BUILTIN.map(row).join('')+'</div>';return h}
+function vKamper(){setHead('Kamp','Tre-, sju- eller tiokamp över flera spel');
+  const ks=Object.values(S.kamper).sort((a,b)=>b.skapad-a.skapad);
+  let h='<div class="btns"><button class="btn pri" data-act="new-kamp">+ Ny kamp</button></div>';
+  if(!ks.length)h+='<div class="card empty"><p>Ingen kamp än. Samla poäng från flera spel, kort- som brädspel, i en totalställning.</p></div>';
+  else h+='<div class="list">'+ks.map(k=>{const p=kampPts(k),{order}=ranks(p);return '<button class="tap card" data-act="open-kamp" data-id="'+k.id+'"><strong>'+esc(k.namn)+'</strong><div class="mute">'+k.moments.length+' delmoment · leder: '+esc(k.spelare[order[0]]||'–')+(k.insats?' · '+esc(k.insats):'')+'</div></button>'}).join('')+'</div>';
+  return h}
+function vKamp(k){const p=kampPts(k);setHead(k.namn,k.moments.length+' delmoment'+(k.insats?' · '+k.insats:''));
+  let h='<button class="btn" data-act="back">‹ Tillbaka</button>'+board(k.spelare,p,false,' p');
+  h+='<div class="btns"><button class="btn pri" data-act="add-moment">+ Lägg till delmoment</button></div>';
+  if(k.moments.length)h+='<div class="list">'+k.moments.map((m,j)=>'<div class="card"><div class="row"><strong class="grow">'+(j+1)+'. '+esc(m.namn)+'</strong><button class="btn red" data-act="del-moment" data-i="'+j+'">Ta bort</button></div><div class="mute">'+k.spelare.filter(x=>m.plac[x]).sort((a,b)=>m.plac[a]-m.plac[b]).map(x=>m.plac[x]+'. '+esc(x)).join(' · ')+'</div></div>').join('')+'</div>';
+  else h+='<p class="mute">Lägg till första delmomentet, för hand eller från ett avslutat spel.</p>';
+  h+='<p class="mute">Poäng per placering: '+(k.skala?esc(k.skala):'antal spelare för 1:a plats, sedan ett mindre per plats')+'.</p><div class="btns"><button class="btn red" data-act="del-kamp">Ta bort kampen</button></div>';return h}
+function vHist(){setHead('Historik','Spelkvällsligan – vem vinner över tid?');
+  const done=Object.values(S.sessions).filter(s=>s.status==='klar').sort((a,b)=>b.klar-a.klar);
+  if(!done.length)return '<div class="card empty"><p>Inga avslutade spel än. När ni avslutar ett spel hamnar det här.</p></div>';
+  const names=[...new Set(done.map(s=>s.name))].sort();
+  const list=filt?done.filter(s=>s.name===filt):done;const st={};
+  list.forEach(s=>{s.players.forEach(p=>{st[p]=st[p]||{w:0,n:0};st[p].n++});(s.vinnare||[]).forEach(p=>{st[p]&&st[p].w++})});
+  const rows=Object.entries(st).sort((a,b)=>b[1].w-a[1].w||a[1].n-b[1].n);
+  let h='<label class="f">Visa spel<select id="filt"><option value="">Alla spel</option>'+names.map(n=>'<option'+(n===filt?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select></label>';
+  h+='<h2>Ligan</h2><div class="card scroll"><table><thead><tr><th>Spelare</th><th>Vinster</th><th>Spelade</th><th>Vinst-%</th></tr></thead><tbody>'+rows.map(([p,x])=>'<tr><td>'+esc(p)+'</td><td>'+x.w+'</td><td>'+x.n+'</td><td>'+Math.round(x.w/x.n*100)+'%</td></tr>').join('')+'</tbody></table></div>';
+  h+='<h2>Avslutade spel</h2><div class="list">'+list.map(s=>{const t=totals(s);return '<button class="tap card" data-act="open-session" data-id="'+s.id+'"><div class="row"><strong class="grow">'+esc(s.name)+'</strong><span class="mute">'+dstr(s.klar)+'</span></div><div class="mute">Vinnare: '+esc((s.vinnare||[]).join(' & '))+' · '+s.players.map((p,i)=>esc(p)+' '+t[i]).join(', ')+'</div></button>'}).join('')+'</div>';return h}
+
+/* ---------- Ark (formulär) ---------- */
+const sheet=$('#sheet'),panel=$('#panel');let lastFocus;
+function open(html,bind){lastFocus=document.activeElement;panel.innerHTML=html+'<div class="btns"><button class="btn wide" data-close>Stäng</button></div>';sheet.hidden=false;panel.onclick=panel.oninput=panel.onchange=null;bind&&bind(panel);const f=panel.querySelector('input,textarea,select,button');f&&f.focus()}
+function close(){sheet.hidden=true;panel.innerHTML='';lastFocus&&lastFocus.focus&&lastFocus.focus()}
+sheet.addEventListener('click',e=>{if(e.target===sheet||e.target.closest('[data-close]'))close()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!sheet.hidden)close()});
+const lastNames=()=>{try{return localStorage.getItem('pb-names')||''}catch(e){return ''}};
+const keepNames=v=>{try{localStorage.setItem('pb-names',v)}catch(e){}};
+const parseNames=v=>[...new Set(v.split(/[\n,]+/).map(x=>x.trim()).filter(Boolean))].slice(0,12);
+
+function gameSheet(g,unsaved){
+  const builtin=String(g.id||'').startsWith('b-');
+  let h='<h2>'+esc(g.name)+'</h2><p>'+esc(g.summary)+'</p><p class="mute">'+(g.vinnare==='lagst'?'Lägst':'Högst')+' poäng vinner · '+slutTxt(g)+'</p>';
+  h+='<label class="f">Spelare (en per rad eller med komma)<textarea id="pn" style="min-height:90px" placeholder="Anna, Johan, Sara">'+esc(lastNames())+'</textarea></label><button class="btn pri wide" id="start">Starta spelet</button>';
+  h+='<h2 style="margin-top:20px">Det här fylls i varje runda</h2><ul>'+g.falt.map(f=>'<li>'+esc(f.label)+(f.typ==='bock'?' (ja/nej)':'')+(f.hjalp?' <span class="mute">– '+esc(f.hjalp)+'</span>':'')+'</li>').join('')+'</ul>';
+  if(g.params.length)h+='<h2>Husregler</h2>'+g.params.map((p,i)=>'<div class="fl"><label for="pp'+i+'">'+esc(p.label)+'</label><input type="number" id="pp'+i+'" data-p="'+i+'" value="'+p.value+'" step="any"></div>').join('');
+  h+='<h2>Omgångar</h2><label class="f">Vad som gäller i varje omgång, en per rad (lämna tomt om spelet inte har det)<textarea id="om" style="min-height:110px">'+esc(goals(g).join('\n'))+'</textarea></label>';
+  h+='<p class="mute">Formel: <code>'+esc(g.formel)+'</code></p>';
+  h+='<div class="btns"><button class="btn" id="save">'+(builtin?'Spara som egen variant':'Spara ändringar')+'</button>'+(!builtin&&!unsaved?'<button class="btn red" id="rm">Ta bort spelet</button>':'')+'</div>';
+  if(sample)h+='<h2>Ändra med egna ord</h2><label class="f">Beskriv era regler eller vad som ska ändras<textarea id="chg" placeholder="Hos oss är ess värda 15 och man vinner på 300 poäng"></textarea></label><button class="btn wide" id="aichg">Ändra spelet</button><p id="aist" class="mute" role="status"></p>';
+  if(unsaved)h='<div class="banner">Granska spelet. Stämmer det? Spara det i biblioteket eller starta direkt.</div>'+h;
+  open(h,pn=>{
+    pn.oninput=e=>{const i=e.target.dataset.p;if(i!=null)g.params[+i].value=+e.target.value||0;if(e.target.id==='om'){g.omgangar=e.target.value.split('\n').map(x=>x.trim()).filter(Boolean);if(g.omgangar.length&&g.slut.typ!=='mal')g.slut={typ:'rundor',varde:g.omgangar.length}}};
+    pn.querySelector('#start').onclick=()=>{const v=pn.querySelector('#pn').value,ps=parseNames(v);if(!ps.length)return toast('Skriv in minst en spelare');keepNames(v);
+      const s={id:uid(),name:g.name,game:clone(g),players:ps,rounds:[],status:'pagar',skapad:Date.now()};if(unsaved&&!S.games[g.id])saveGame(g,builtin,true);put('sessions',s.id,s);close();view.session=s.id;view.tab='spela';render();scrollTo(0,0)};
+    pn.querySelector('#save').onclick=()=>{saveGame(g,builtin);close();toast('Sparat i biblioteket')};
+    const rm=pn.querySelector('#rm');if(rm)rm.onclick=()=>{if(!rm.dataset.armed){rm.dataset.armed=1;rm.textContent='Tryck igen för att ta bort';return}del('games',g.id);close()};
+    const b=pn.querySelector('#aichg');if(b)b.onclick=async()=>{const w=pn.querySelector('#chg').value.trim();if(!w)return;const st=pn.querySelector('#aist');b.disabled=true;st.textContent='Ändrar spelet…';
+      try{const raw=await askJSON('Här är regelfilen för ett sällskapsspel:\n'+JSON.stringify(strip(g))+'\n\nÄndra den enligt det här önskemålet från spelarna: "'+w+'"\nBehåll samma format och regler för formeln.\n'+RULES);const ng=validate(raw);ng.id=builtin?null:g.id;gameSheet(ng,true)}
+      catch(e){st.textContent=e.message||'Något gick fel, försök igen.';b.disabled=false}};
+  })}
+const strip=g=>({name:g.name,kategori:g.kategori,summary:g.summary,spelare:g.spelare,vinnare:g.vinnare,slut:g.slut,params:g.params,falt:g.falt,formel:g.formel,omgangar:g.omgangar||[]});
+function saveGame(g,builtin,quiet){const o=strip(g);o.id=(!builtin&&g.id)||'c-'+uid();if(builtin&&!/\(våra regler\)$/.test(o.name)&&g.id&&g.id.startsWith('b-'))o.name+=' (våra regler)';o.skapad=(S.games[o.id]&&S.games[o.id].skapad)||Date.now();g.id=o.id;put('games',o.id,o)}
+
+const RULES='Formatet:\n{"name":"Spelets namn","kategori":"Kortspel | Brädspel | Tärningsspel | Övrigt","summary":"2–3 meningar på svenska om hur poängen räknas och hur man vinner","spelare":{"min":2,"max":6},"vinnare":"hogst" eller "lagst","slut":{"typ":"mal","varde":500} eller {"typ":"rundor","varde":10} eller {"typ":"fritt"},"params":[{"key":"bonus","label":"Bonus för rätt bud","value":10}],"falt":[{"key":"stick","label":"Tagna stick","typ":"tal","hjalp":"kort förklaring"}],"formel":"stick == bud ? bonus + bud : 0","omgangar":["Två triss","Ett triss & en stege"]}\n\nRegler för formatet:\n- "falt" är det som fylls i för VARJE spelare efter varje runda. typ "tal" är ett tal, "bock" är ja/nej (1 eller 0).\n- "formel" räknar ut EN spelares poäng för rundan och får bara använda den spelarens fält och params. Tillåtet: tal, + - * /, parenteser, == != < > <= >=, && || !, villkor a ? b : c och funktionerna min() max() abs() round().\n- "params" är värden som spelarna kan vilja ändra som husregler (kortvärden, bonusar, avdrag). Använd dem i formeln i stället för fasta tal.\n- Alla key ska vara små bokstäver a-z, siffror och _ (inga å, ä, ö).\n- Om poängen beror på andra spelare (t.ex. vinnaren får motståndarnas kortpoäng), låt spelaren skriva in resultatet direkt i ett fält.\n- För brädspel med flera poängkategorier: ett fält per kategori och slut {"typ":"rundor","varde":1}.\n- "omgangar" är valfri: en lista med vad som krävs eller gäller i varje omgång, i ordning (t.ex. öppningshänder i rummy). Annars [].\n- Labels och summary på svenska.\nSvara ENDAST med JSON, ingen annan text.';
+async function askJSON(prompt,images){const opts={modelTier:'default'};if(images&&images.length)opts.images=images;let raw;
+  try{if(typeof sample.json==='function')return await sample.json(prompt,opts)}catch(e){if(e&&(e.code==='not_granted'||e.code==='rate_limited'))throw Error(e.code==='rate_limited'?'För många förfrågningar just nu, vänta en stund.':'Funktionen är inte tillåten här.')}
+  try{raw=await sample(prompt,opts)}catch(e){throw Error(e&&e.code==='rate_limited'?'För många förfrågningar just nu, vänta en stund.':'Fick inget svar, försök igen.')}
+  const t=raw&&raw.text||'',a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0)throw Error('Kunde inte tolka reglerna, försök igen.');return JSON.parse(t.slice(a,b+1))}
+function aiCreate(){
+  open('<h2>Skapa ett spel från regler</h2><p class="mute">Klistra in reglerna från en webbsida eller skriv med egna ord hur ni räknar poäng. Appen gör om det till en poängräkning som du granskar innan den sparas.</p><label class="f">Spelets namn (valfritt)<input type="text" id="gn" placeholder="t.ex. Ticket to Ride"></label><label class="f">Regler eller hur ni räknar<textarea id="gr" placeholder="Klistra in här…"></textarea></label>'+(canImg?'<label class="f">Eller foto av regelhäfte<input type="file" id="gi" accept="image/*" multiple></label>':'')+'<button class="btn pri wide" id="go">Skapa spelet</button><p id="st" class="mute" role="status"></p>',pn=>{
+    pn.querySelector('#go').onclick=async()=>{const n=pn.querySelector('#gn').value.trim(),r=pn.querySelector('#gr').value.trim(),fi=pn.querySelector('#gi'),imgs=fi?[...fi.files].slice(0,4):[];
+      if(!r&&!imgs.length&&!n)return toast('Klistra in regler, lägg till en bild eller skriv spelets namn');
+      const st=pn.querySelector('#st'),b=pn.querySelector('#go');b.disabled=true;st.textContent='Läser reglerna och bygger spelet…';
+      try{const raw=await askJSON('Skapa en regelfil för poängräkning i sällskapsspelet'+(n?' "'+n+'"':'')+'.\n'+(r?'Spelarnas regeltext:\n"""\n'+r.slice(0,12000)+'\n"""\n':'Använd de vanligaste reglerna för spelet.\n')+(imgs.length?'Bifogade bilder visar reglerna.\n':'')+RULES,imgs);
+        const g=validate(raw);if(n)g.name=n;gameSheet(g,true)}
+      catch(e){st.textContent=e.message||'Något gick fel, försök igen.';b.disabled=false}}})}
+function roundSheet(s,j){const g=s.game,ed=j!=null,r=ed?clone(s.rounds[j]):{id:uid(),v:{}};
+  const ix=ed?j:s.rounds.length,gl=goals(g)[ix];let h='<h2>'+(ed?'Ändra runda '+(j+1):'Runda '+(s.rounds.length+1))+'</h2>'+(gl?'<div class="banner"><strong>'+esc(gl)+'</strong></div>':'');
+  h+=s.players.map((p,i)=>'<fieldset><legend>'+esc(p)+'</legend>'+g.falt.map(f=>{const id='f'+i+'_'+f.key,v=(r.v[i]||{})[f.key];return f.typ==='bock'?'<label class="chk"><input type="checkbox" id="'+id+'" data-i="'+i+'" data-k="'+f.key+'"'+(v?' checked':'')+'>'+esc(f.label)+'</label>':'<div class="fl"><label for="'+id+'">'+esc(f.label)+'</label><input type="number" inputmode="decimal" step="any" id="'+id+'" data-i="'+i+'" data-k="'+f.key+'" value="'+(v??'')+'"></div>'}).join('')+'<div class="pre" id="pv'+i+'">= '+score(g,r.v[i])+' p</div></fieldset>').join('');
+  h+='<button class="btn pri wide" id="sv">Spara rundan</button>'+(ed?'<div class="btns"><button class="btn red" id="dr">Ta bort rundan</button></div>':'');
+  open(h,pn=>{
+    pn.oninput=pn.onchange=e=>{const x=e.target,i=x.dataset.i;if(i==null)return;(r.v[i]=r.v[i]||{})[x.dataset.k]=x.type==='checkbox'?(x.checked?1:0):(x.value===''?'':+x.value);pn.querySelector('#pv'+i).textContent='= '+score(g,r.v[i])+' p'};
+    pn.querySelector('#sv').onclick=()=>{const n=clone(s);if(ed)n.rounds[j]=r;else n.rounds.push(r);put('sessions',n.id,n);close()};
+    const d=pn.querySelector('#dr');if(d)d.onclick=()=>{const n=clone(s);n.rounds.splice(j,1);put('sessions',n.id,n);close()}})}
+function ruleQ(s){open('<h2>Fråga om reglerna</h2><label class="f">Din fråga<textarea id="q" style="min-height:90px" placeholder="Får man ta sista sticket med en tvåa?"></textarea></label><button class="btn pri wide" id="ask">Fråga</button><div id="ans" class="answer" hidden aria-live="polite"></div>',pn=>{
+  pn.querySelector('#ask').onclick=async()=>{const q=pn.querySelector('#q').value.trim();if(!q)return;const a=pn.querySelector('#ans'),b=pn.querySelector('#ask');a.hidden=false;a.textContent='Tänker…';b.disabled=true;
+    try{const r=await sample('Du är en vänlig domare vid en spelkväll. Spelet är "'+s.name+'". Gruppens poängregler:\n'+JSON.stringify(strip(s.game))+'\n\nFråga: '+q+'\n\nSvara kort på svenska (högst 5 meningar). Säger reglerna inget, säg det och föreslå en vanlig husregel.',{modelTier:'quick',onText:x=>{a.textContent=x.text}});a.textContent=r.text}
+    catch(e){a.textContent=e&&e.code==='rate_limited'?'För många frågor just nu, vänta en stund.':'Kunde inte få något svar, försök igen.'}b.disabled=false}})}
+function kampSheet(){open('<h2>Ny kamp</h2><label class="f">Namn<input type="text" id="kn" placeholder="Höstkampen"></label><label class="f">Deltagare (en per rad eller med komma)<textarea id="kp" style="min-height:90px">'+esc(lastNames())+'</textarea></label><label class="f">Poäng per placering (valfritt)<input type="text" id="ks" placeholder="t.ex. 10, 7, 5, 3, 1"></label><label class="f">Insats (valfritt)<input type="text" id="ki" placeholder="Sista plats bjuder vinnaren på middag"></label><button class="btn pri wide" id="ok">Skapa kampen</button>',pn=>{
+  pn.querySelector('#ok').onclick=()=>{const ps=parseNames(pn.querySelector('#kp').value);if(ps.length<2)return toast('Lägg till minst två deltagare');const k={id:uid(),namn:pn.querySelector('#kn').value.trim()||'Kamp',spelare:ps,skala:pn.querySelector('#ks').value.trim(),insats:pn.querySelector('#ki').value.trim(),moments:[],skapad:Date.now()};put('kamper',k.id,k);close();view.kamp=k.id;view.tab='kamp';render()}})}
+function placeFrom(s,names){const t=totals(s),{rk}=ranks(t,s.game.vinnare==='lagst'),o={};s.players.forEach((p,i)=>{if(names.includes(p))o[p]=rk[i]});const vals=[...new Set(Object.values(o))].sort((a,b)=>a-b);for(const p in o)o[p]=vals.indexOf(o[p])+1;return o}
+function momentSheet(k){const done=Object.values(S.sessions).filter(s=>s.status==='klar'&&s.players.some(p=>k.spelare.includes(p))).sort((a,b)=>b.klar-a.klar);const n=k.spelare.length;
+  open('<h2>Nytt delmoment</h2><label class="f">Spel<input type="text" id="mn" list="gl" placeholder="t.ex. Plump eller Catan"><datalist id="gl">'+allGames().map(g=>'<option value="'+esc(g.name)+'">').join('')+'</datalist></label>'+(done.length?'<label class="f">Hämta placeringar från avslutat spel<select id="ms"><option value="">Välj…</option>'+done.map(s=>'<option value="'+s.id+'">'+esc(s.name)+' – '+dstr(s.klar)+'</option>').join('')+'</select></label>':'')+'<h2>Placeringar</h2>'+k.spelare.map((p,i)=>'<div class="fl"><label for="pl'+i+'">'+esc(p)+'</label><select id="pl'+i+'" data-p="'+esc(p)+'"><option value="">Deltog ej</option>'+Array.from({length:n},(_,j)=>'<option value="'+(j+1)+'">'+(j+1)+':a</option>').join('')+'</select></div>').join('')+'<button class="btn pri wide" id="ok">Lägg till</button>',pn=>{
+    const ms=pn.querySelector('#ms');if(ms)ms.onchange=()=>{const s=S.sessions[ms.value];if(!s)return;pn.querySelector('#mn').value=s.name;const o=placeFrom(s,k.spelare);pn.querySelectorAll('[data-p]').forEach(x=>x.value=o[x.dataset.p]||'')};
+    pn.querySelector('#ok').onclick=()=>{const plac={};pn.querySelectorAll('[data-p]').forEach(x=>{if(x.value)plac[x.dataset.p]=+x.value});if(!Object.keys(plac).length)return toast('Ange minst en placering');const nk=clone(k);nk.moments.push({id:uid(),namn:pn.querySelector('#mn').value.trim()||'Delmoment',plac});put('kamper',nk.id,nk);close()}})}
+function toKampSheet(s){const ks=Object.values(S.kamper);if(!ks.length){toast('Skapa en kamp först under fliken Kamp');return}
+  open('<h2>Lägg till i kamp</h2><label class="f">Kamp<select id="kk">'+ks.map(k=>'<option value="'+k.id+'">'+esc(k.namn)+'</option>').join('')+'</select></label><p class="mute">Placeringarna hämtas från slutställningen. Spelare matchas på namn.</p><button class="btn pri wide" id="ok">Lägg till</button>',pn=>{
+    pn.querySelector('#ok').onclick=()=>{const k=S.kamper[pn.querySelector('#kk').value];const plac=placeFrom(s,k.spelare);if(!Object.keys(plac).length)return toast('Inga namn matchar kampens deltagare');const nk=clone(k);nk.moments.push({id:uid(),namn:s.name,plac});put('kamper',nk.id,nk);close();toast('Tillagt i '+k.namn)}})}
+
+const SKINS=[{id:'',n:'Filtbord',c:'#0E5B40'},{id:'vin',n:'Vinröd',c:'#7A1F35'},{id:'hav',n:'Hav',c:'#1D4E89'},{id:'natt',n:'Natt',c:'#262F40'}];
+function setSkin(v){if(v)document.documentElement.dataset.skin=v;else delete document.documentElement.dataset.skin;try{localStorage.setItem('pb-skin',v)}catch(e){}}
+try{const v=localStorage.getItem('pb-skin');if(v)document.documentElement.dataset.skin=v}catch(e){}
+function themeSheet(){const cur=document.documentElement.dataset.skin||'';open('<h2>Tema</h2><div class="sw">'+SKINS.map(x=>'<button data-skin="'+x.id+'" aria-pressed="'+(x.id===cur)+'" style="background:'+x.c+'">'+x.n+'</button>').join('')+'</div>',pn=>{pn.onclick=e=>{const b=e.target.closest('[data-skin]');if(!b)return;setSkin(b.dataset.skin);pn.querySelectorAll('[data-skin]').forEach(x=>x.setAttribute('aria-pressed',x===b))}})}
+
+/* ---------- Händelser ---------- */
+function arm(b){if(b.dataset.armed)return true;b.dataset.armed=1;b.textContent='Tryck igen för att bekräfta';setTimeout(()=>{if(b.isConnected)render()},4000);return false}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||panel.contains(b))return;const a=b.dataset.act,s=S.sessions[view.session],k=S.kamper[view.kamp];
+  if(a==='tab'){view={tab:b.dataset.v};render();scrollTo(0,0)}
+  else if(a==='back'){view={tab:view.tab};render()}
+  else if(a==='open-session'){view.session=b.dataset.id;render();scrollTo(0,0)}
+  else if(a==='open-kamp'){view.kamp=b.dataset.id;render();scrollTo(0,0)}
+  else if(a==='open-game'){gameSheet(clone(findGame(b.dataset.id)))}
+  else if(a==='ai-create')aiCreate();
+  else if(a==='theme')themeSheet();
+  else if(a==='new-round'&&s)roundSheet(s);
+  else if(a==='edit-round'&&s)roundSheet(s,+b.dataset.i);
+  else if(a==='rule-q'&&s)ruleQ(s);
+  else if(a==='finish'&&s){const t=totals(s),{order,rk}=ranks(t,s.game.vinnare==='lagst');const n=clone(s);n.status='klar';n.klar=Date.now();n.vinnare=order.filter(i=>rk[i]===1).map(i=>s.players[i]);put('sessions',n.id,n);toast('Sparat i historiken')}
+  else if(a==='resume'&&s){const n=clone(s);n.status='pagar';put('sessions',n.id,n)}
+  else if(a==='to-kamp'&&s)toKampSheet(s);
+  else if(a==='del-session'&&s){if(arm(b)){del('sessions',s.id);view={tab:view.tab};render()}}
+  else if(a==='new-kamp')kampSheet();
+  else if(a==='add-moment'&&k)momentSheet(k);
+  else if(a==='del-moment'&&k){if(arm(b)){const n=clone(k);n.moments.splice(+b.dataset.i,1);put('kamper',n.id,n)}}
+  else if(a==='del-kamp'&&k){if(arm(b)){del('kamper',k.id);view={tab:'kamp'};render()}}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('tr[data-act]'))e.target.click()});
+document.addEventListener('change',e=>{if(e.target.id==='filt'){filt=e.target.value;render()}});
+
+/* ---------- Start ---------- */
+render();
+const cl=window.claude;
+(async()=>{try{db=cl&&cl.use?await cl.use('db'):null}catch(e){db=null}
+  if(!db){loadLocal();render();return}
+  let ok=0;const timer=setTimeout(()=>{if(!ok)toast('Kan inte nå sparade spel än – visar det som finns')},10000);
+  Object.keys(S).forEach(c=>db.collection(c).onSnapshot(snap=>{const o={};snap.docs.forEach(d=>{o[d.id]=clone(d.data())});S[c]=o;if(!snap.metadata.fromCache){ok=1;clearTimeout(timer)}render()},()=>toast('Synken avbröts – ladda om sidan')));
+})();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+(async()=>{try{sample=cl&&cl.use?await cl.use('sample'):null;if(sample&&sample.limits){const l=await sample.limits();canImg=!!(l&&l.images)}}catch(e){sample=null}render()})();
+}
+</script>
+</body>
+</html>
